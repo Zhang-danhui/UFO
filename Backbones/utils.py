@@ -86,12 +86,6 @@ def evaluate_batch(args, model, g, features, labels, mask,
                    label_offset1, label_offset2,
                    cls_balance=True, ids_per_cls=None,
                    debug=True):
-    """
-    评估 Task-IL 单任务 head 的 batch 推理准确率（只评 mask/test_ids）
-    - seeds = mask（强烈建议）
-    - 默认用 FullNeighborSampler(1)（你是1-layer）
-      如果你想对齐训练采样，也可以切到 args.nb_sampler（见下面开关）
-    """
 
     model.eval()
     device = f'cuda:{args.gpu}'
@@ -377,4 +371,10 @@ class NodeLevelDataset(incremental_graph_trans_):
                                       cls}
                 with open(split_name, 'wb') as f:
                     pickle.dump(tr_va_te_split, f)
+            else:
+                # Match first-time split RNG consumption once per experiment.
+                if ratio_valid_test[1] > 0 and not getattr(args, '_split_rng_consumed', False):
+                    for c in cls:
+                        train_valid_test_split(cls_id_map[c], ratio_valid_test=ratio_valid_test)
+            args._split_rng_consumed = True
         super().__init__([[graph, label], tr_va_te_split], n_cls)
