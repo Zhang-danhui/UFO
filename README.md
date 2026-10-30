@@ -1,6 +1,6 @@
 # UFO
 
-Official implementation of UFO: A Unified Flow-Oriented Framework for Robust Continual Graph Learning.
+🎉 Official implementation of UFO: A Unified Flow-Oriented Framework for Robust Continual Graph Learning (NeurIPS 2026).
 
 ## Datasets
 
