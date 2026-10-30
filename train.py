@@ -53,13 +53,14 @@ def build_parser():
     parser.add_argument("--ori_data_path", type=str, default="/store/data", help="the root path to raw data")
     parser.add_argument("--data_path", type=str, default="./data", help="the path for processed data")
     parser.add_argument("--result_path", type=str, default="./results", help="the path for saving results")
-    parser.add_argument("--overwrite_result", type=strtobool, default=False, help="whether to overwrite existing results")
     parser.add_argument("--load_check", type=strtobool, default=False, help="whether to check the existence of processed data by loading")
     parser.add_argument("--perform_testing", type=strtobool, default=True, help="whether to perform final testing")
     return parser
 def run_experiment(args):
     args.ratio_valid_test = [float(i) for i in args.ratio_valid_test]
-    set_seed()
+    # torch.set_num_threads(1)
+    set_seed(args)
+    args._split_rng_consumed = False
     mkdir_if_missing(f"{args.data_path}")
 
     method_args = {"UFO": args.UFO_args}
@@ -89,10 +90,11 @@ def run_experiment(args):
         if args.replace_illegal_char:
             name = remove_illegal_characters(name)
 
-        if os.path.isfile(f"{args.result_path}/{name}.pkl") and not args.overwrite_result:
+        if os.path.isfile(f"{args.result_path}/{name}.pkl"):
             print("The results of the following configuration exists, will load this result for use \n", f"{args.result_path}/{name}.pkl")
-            AP_AF = show_final_APAF(f"{args.result_path}/{name}.pkl")
-            AP = float(AP_AF.split("$")[0])
+            with open(f"{args.result_path}/{name}.pkl", "rb") as f:
+                saved_acc_matrices = pickle.load(f)
+            AP = float(np.mean([np.mean(matrix[-1]) for matrix in saved_acc_matrices]))
             if AP > AP_best:
                 AP_best = AP
                 hyp_best_str = hyp_params_str
